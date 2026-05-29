@@ -668,6 +668,150 @@
     /* Divider */
     .divider { height: 1px; background: var(--border); margin: 2px 0; }
 
+    /* ===== View toggle ===== */
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .view-btn {
+      width: 34px;
+      height: 34px;
+      border: none;
+      background: var(--bg);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition), color var(--transition);
+    }
+    .view-btn:hover { background: var(--surface3); color: var(--text); }
+    .view-btn.active { background: var(--accent); color: #fff; }
+
+    /* ===== Calendar ===== */
+    #calendar-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .cal-nav-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .cal-nav-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition);
+    }
+    .cal-nav-btn:hover { background: var(--surface3); color: var(--text); }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    .cal-dow {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      padding: 4px 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .cal-cell {
+      min-height: 72px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 5px 5px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: box-shadow var(--transition);
+      cursor: default;
+    }
+    .cal-cell:hover { box-shadow: var(--shadow-sm); }
+    .cal-cell.other-month { opacity: 0.35; }
+    .cal-cell.today { border-color: var(--accent); border-width: 1.5px; }
+
+    .cal-date {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text2);
+      text-align: right;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .cal-cell.today .cal-date {
+      color: #fff;
+      background: var(--accent);
+      border-radius: 99px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: auto;
+    }
+
+    .cal-task {
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 2px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      color: #fff;
+      transition: opacity var(--transition), transform var(--transition);
+      line-height: 1.4;
+    }
+    .cal-task:hover { opacity: 0.85; transform: scale(1.02); }
+    .cal-task.done { opacity: 0.4; text-decoration: line-through; }
+
+    .cal-more {
+      font-size: 10px;
+      color: var(--text3);
+      font-weight: 600;
+      padding: 1px 3px;
+      cursor: pointer;
+    }
+    .cal-more:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      #calendar-container { padding: 10px 12px 80px; gap: 8px; }
+      .cal-cell { min-height: 52px; padding: 3px; }
+      .cal-task { font-size: 9.5px; padding: 1px 3px; }
+    }
+
     /* ===== Mobile drawer ===== */
     #drawer-overlay {
       display: none;
@@ -814,9 +958,14 @@
         <option value="priority">優先度順</option>
         <option value="title">タイトル順</option>
       </select>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-list" onclick="setView('list')" title="リスト">☰</button>
+        <button class="view-btn" id="view-cal" onclick="setView('calendar')" title="カレンダー">▦</button>
+      </div>
     </div>
 
     <div id="task-list-container"></div>
+    <div id="calendar-container" style="display:none;"></div>
   </div>
 </div>
 
@@ -1127,7 +1276,8 @@ function filteredTasks() {
 function render() {
   renderSidebar();
   renderHeader();
-  renderTaskList();
+  if (currentView === 'list') renderTaskList();
+  else renderCalendar();
 }
 
 function renderSidebar() {
@@ -1520,6 +1670,84 @@ document.addEventListener('keydown', e => {
   const el = document.getElementById(id);
   el.addEventListener('click', e => { if (e.target === el) { closeModal(); closeProjectModal(); closeConfirm(); } });
 });
+
+// ==================== View ====================
+let currentView = 'list'; // 'list' | 'calendar'
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-11
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-list').classList.toggle('active', v === 'list');
+  document.getElementById('view-cal').classList.toggle('active', v === 'calendar');
+  document.getElementById('task-list-container').style.display = v === 'list' ? '' : 'none';
+  document.getElementById('calendar-container').style.display = v === 'calendar' ? '' : 'none';
+  document.getElementById('sort-select').style.display = v === 'list' ? '' : 'none';
+  if (v === 'calendar') renderCalendar();
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calendar-container');
+  const list = filteredTasks();
+  const tasksByDate = {};
+  list.forEach(t => {
+    if (t.due) {
+      if (!tasksByDate[t.due]) tasksByDate[t.due] = [];
+      tasksByDate[t.due].push(t);
+    }
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth + 1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7; // Mon=0
+  const totalCells = Math.ceil((startDow + lastDay.getDate()) / 7) * 7;
+  const todayStr = today();
+
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const dows = ['月','火','水','木','金','土','日'];
+
+  let html = `
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calMove(-1)">‹</button>
+      <div class="cal-nav-title">${calYear}年 ${monthNames[calMonth]}</div>
+      <button class="cal-nav-btn" onclick="calMove(1)">›</button>
+    </div>
+    <div class="cal-grid">
+      ${dows.map(d => `<div class="cal-dow">${d}</div>`).join('')}
+  `;
+
+  for (let i = 0; i < totalCells; i++) {
+    const dayNum = i - startDow + 1;
+    const date = new Date(calYear, calMonth, dayNum);
+    const isThisMonth = dayNum >= 1 && dayNum <= lastDay.getDate();
+    const dateStr = date.toISOString().slice(0, 10);
+    const isToday = dateStr === todayStr;
+    const dayTasks = tasksByDate[dateStr] || [];
+    const maxShow = 3;
+    const shown = dayTasks.slice(0, maxShow);
+    const extra = dayTasks.length - maxShow;
+
+    html += `<div class="cal-cell${!isThisMonth ? ' other-month' : ''}${isToday ? ' today' : ''}">
+      <div class="cal-date">${date.getDate()}</div>
+      ${shown.map(t => {
+        const p = t.projectId ? getProject(t.projectId) : null;
+        const color = p ? p.color : 'var(--accent)';
+        return `<div class="cal-task${t.done ? ' done' : ''}" style="background:${color}" onclick="openEditModal('${t.id}')" title="${escHtml(t.title)}">${escHtml(t.title)}</div>`;
+      }).join('')}
+      ${extra > 0 ? `<div class="cal-more" onclick="">+${extra}件</div>` : ''}
+    </div>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calMove(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+}
 
 // ==================== Mobile Drawer ====================
 function openDrawer() {
