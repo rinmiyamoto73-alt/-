@@ -529,6 +529,7 @@
     /* Task actions */
     .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition); flex-shrink: 0; }
     .task-card:hover .task-actions { opacity: 1; }
+    @media (hover: none) { .task-actions { opacity: 1; } }
 
     .icon-btn {
       width: 27px;
