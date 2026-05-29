@@ -668,11 +668,53 @@
     /* Divider */
     .divider { height: 1px; background: var(--border); margin: 2px 0; }
 
+    /* ===== Mobile drawer ===== */
+    #drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      backdrop-filter: blur(2px);
+    }
+    #drawer-overlay.open { display: block; }
+
+    .menu-btn {
+      display: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--text2);
+      flex-shrink: 0;
+    }
+
     @media (max-width: 640px) {
-      #sidebar { display: none; }
-      #header { padding: 0 16px; }
+      #sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100%;
+        width: 260px;
+        z-index: 300;
+        transition: left 0.25s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: none;
+      }
+      #sidebar.open {
+        left: 0;
+        box-shadow: var(--shadow-lg);
+      }
+      .menu-btn { display: flex; }
+      #header { padding: 0 16px; gap: 8px; }
+      #header .btn-ghost { display: none; }
+      #header .btn-primary { padding: 7px 10px; font-size: 12px; }
       #toolbar { padding: 8px 16px; }
-      #task-list-container { padding: 12px 16px; }
+      #task-list-container { padding: 12px 16px 80px; }
     }
   </style>
 </head>
@@ -742,9 +784,13 @@
     </div>
   </nav>
 
+  <!-- Mobile drawer overlay -->
+  <div id="drawer-overlay" onclick="closeDrawer()"></div>
+
   <!-- ===== Main ===== -->
   <div id="main">
     <div id="header">
+      <button class="menu-btn" onclick="openDrawer()">☰</button>
       <div class="header-dot" id="header-dot" style="display:none;"></div>
       <div class="header-title-wrap">
         <div id="header-title">すべてのタスク</div>
@@ -1035,16 +1081,6 @@ function escHtml(s) {
 function getProject(id) { return projects.find(p => p.id === id) || null; }
 
 // ==================== Navigation ====================
-function selectProject(projectId, filter) {
-  currentProjectId = projectId;
-  currentFilter = filter || (projectId ? 'active' : 'all');
-  render();
-}
-
-function setSubFilter(f) {
-  currentFilter = f;
-  render();
-}
 
 // ==================== Filtered Tasks ====================
 function getProjectTasks(projectId) {
@@ -1484,6 +1520,29 @@ document.addEventListener('keydown', e => {
   const el = document.getElementById(id);
   el.addEventListener('click', e => { if (e.target === el) { closeModal(); closeProjectModal(); closeConfirm(); } });
 });
+
+// ==================== Mobile Drawer ====================
+function openDrawer() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+// サイドバーの項目をタップしたらドロワーを閉じる（モバイルのみ）
+function selectProject(projectId, filter) {
+  currentProjectId = projectId;
+  currentFilter = filter || (projectId ? 'active' : 'all');
+  closeDrawer();
+  render();
+}
+function setSubFilter(f) {
+  currentFilter = f;
+  closeDrawer();
+  render();
+}
 
 // ==================== Service Worker ====================
 if ('serviceWorker' in navigator) {
