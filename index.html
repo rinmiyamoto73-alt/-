@@ -896,10 +896,10 @@
       </div>
 
       <div class="sidebar-section">
-        <div class="section-label">業務</div>
+        <div class="section-label">プロジェクト</div>
         <div id="project-list"></div>
         <button class="add-project-btn" onclick="openProjectModal(null)">
-          <span style="font-size:16px;line-height:1">＋</span> 業務を追加
+          <span style="font-size:16px;line-height:1">＋</span> プロジェクトを追加
         </button>
       </div>
     </div>
@@ -985,7 +985,7 @@
       <textarea class="textarea" id="f-note" placeholder="詳細メモ（任意）"></textarea>
     </div>
     <div class="field">
-      <label>業務</label>
+      <label>プロジェクト</label>
       <select class="select-input" id="f-project">
         <option value="">未分類</option>
       </select>
@@ -1026,11 +1026,11 @@
 <div class="modal-overlay hidden" id="project-modal">
   <div class="modal" style="max-width:400px;">
     <div class="modal-header">
-      <h3 id="pm-title">業務を追加</h3>
+      <h3 id="pm-title">プロジェクトを追加</h3>
       <button class="modal-close" onclick="closeProjectModal()">✕</button>
     </div>
     <div class="field">
-      <label>業務名</label>
+      <label>プロジェクト名</label>
       <input class="input" id="pm-name" type="text" placeholder="例: 営業, 開発, 総務" />
     </div>
     <div class="field">
@@ -1537,7 +1537,7 @@ function openProjectModal(id) {
   editingProjectId = id;
   if (id) {
     const p = getProject(id);
-    document.getElementById('pm-title').textContent = '業務を編集';
+    document.getElementById('pm-title').textContent = 'プロジェクトを編集';
     document.getElementById('pm-name').value = p.name;
     document.getElementById('pm-desc').value = p.desc || '';
     buildColorPicker(p.color);
@@ -1547,7 +1547,7 @@ function openProjectModal(id) {
       <button class="btn btn-ghost" onclick="closeProjectModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="saveProject()">保存</button>`;
   } else {
-    document.getElementById('pm-title').textContent = '業務を追加';
+    document.getElementById('pm-title').textContent = 'プロジェクトを追加';
     document.getElementById('pm-name').value = '';
     document.getElementById('pm-desc').value = '';
     buildColorPicker(PROJECT_COLORS[projects.length % PROJECT_COLORS.length]);
@@ -1592,7 +1592,7 @@ async function saveProject() {
 function confirmDeleteProject(id) {
   const p = getProject(id);
   const n = getProjectTasks(id).length;
-  showConfirm(`業務「${p.name}」を削除しますか？\n関連する ${n} 件のタスクは「未分類」に移動します。`, async () => {
+  showConfirm(`プロジェクト「${p.name}」を削除しますか？\n関連する ${n} 件のタスクは「未分類」に移動します。`, async () => {
     const affectedTasks = tasks.filter(t => t.projectId === id);
     tasks.forEach(t => { if (t.projectId === id) t.projectId = ''; });
     projects = projects.filter(x => x.id !== id);
